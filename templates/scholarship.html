@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+{% block body %}
+  <head>
+    <title>Sortable and Searchable Table</title>
+    <style>
+      table {
+        width: 90%;
+        margin: 0 auto;
+        border-collapse: collapse;
+        font-family: Arial, sans-serif;
+        font-size: 17px;
+        text-align: center;
+      }
+
+      th {
+        background-color: #4CAF50;
+        color: white;
+        cursor: pointer;
+        padding: 10px;
+      }
+
+      td {
+        padding: 15px;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+
+      .search-container {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .search-input {
+      margine: 10px;
+        padding: 5px;
+        width: 200px;
+      }
+       input {
+    margin: 19px;}
+    </style>
+  </head>
+  <body>
+      <div class="services_section">
+        <div class="container">
+            <h1 class="services_text">Scholarships</h1>
+        </div>
+    </div>
+    <div class="search-container">
+      <input
+        type="text"
+        id="searchInput"
+        class="search-input"
+        placeholder="Search..."
+        onkeyup="searchTable()"
+      >
+    </div>
+    <table id="myTable">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)">Scholarship Title</th>
+          <th onclick="sortTable(1)">University Name</th>
+
+          <th onclick="sortTable(5)">Deadline</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in result %}
+          <tr>
+            <td>{{ item['name'] }}</td>
+            <td>{{ item['university'] }}</td>
+
+            <td>{{ item['deadline'] }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+{% endblock %}

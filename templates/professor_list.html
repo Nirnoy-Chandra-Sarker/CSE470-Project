@@ -1,0 +1,301 @@
+{% extends "layout.html" %}
+{% block body %}
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sortable Table</title>
+  <style>
+    .sr-only {
+      position: absolute;
+      top: -30em;
+    }
+
+    table.sortable {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: Georgia, serif;
+      font-size: 15px;
+      background-color: #f0e2e1;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    table.sortable th {
+      padding: 10px;
+      color: white;
+      background-color: #3A3E59;
+      border-top: 1px solid #ddd;
+      border-bottom: 1px solid #ddd;
+      position: relative;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    table.sortable th.no-sort {
+      padding-top: 15px;
+      cursor: default;
+    }
+
+    table.sortable th button {
+    color: white;
+    background-color: #3A3E59;
+      font-size: 18px;
+      font-weight: bold;
+      margin: 8px;
+      padding:10px;
+
+      cursor: pointer;
+    }
+
+    table.sortable th button span {
+      margin-left: 10px;
+    }
+
+    table.sortable th[aria-sort="descending"] span::after {
+      content: "▼";
+    }
+
+    table.sortable th[aria-sort="ascending"] span::after {
+      content: "▲";
+    }
+
+    table.show-unsorted-icon th:not([aria-sort]) button span::after {
+      content: "♢";
+      position: relative;
+      top: -3px;
+      left: -4px;
+    }
+
+    table.sortable tbody tr:nth-child(odd) {
+      background-color: #edf0d1;
+    }
+
+    table.sortable td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    /* Focus and hover styling */
+
+    table.sortable th button:focus,
+    table.sortable th button:hover {
+      background-color: #3A3E59;;
+    }
+
+    table.sortable th button:focus span,
+    table.sortable th button:hover span {
+      right: 2px;
+    }
+
+    table.sortable th:not([aria-sort]) button:focus span::after,
+    table.sortable th:not([aria-sort]) button:hover span::after {
+      top: 0;
+    }
+  </style>
+</head>
+<body>
+        <div class="services_section">
+        <div class="container">
+            <h1 class="services_text">Faculties</h1>
+        </div>
+  <div class="table-wrap">
+    <table class="sortable">
+      <caption>
+        Professors list
+        <span class="sr-only">, column headers with buttons are sortable.</span>
+      </caption>
+      <thead>
+        <tr>
+          <th>
+            <button>
+              Name
+              <span aria-hidden="true"></span>
+            </button>
+          </th>
+          <th aria-sort="ascending">
+            <button>
+              Designation
+              <span aria-hidden="true"></span>
+            </button>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+
+         {% for item in result %}
+          <tr>
+            <td>{{ item['FullName'] }}</td>
+            <td>{{ item['designation'] }}</td>
+
+          </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+
+'use strict';
+
+class SortableTable {
+  constructor(tableNode) {
+    this.tableNode = tableNode;
+
+    this.columnHeaders = tableNode.querySelectorAll('thead th');
+
+    this.sortColumns = [];
+
+    for (var i = 0; i < this.columnHeaders.length; i++) {
+      var ch = this.columnHeaders[i];
+      var buttonNode = ch.querySelector('button');
+      if (buttonNode) {
+        this.sortColumns.push(i);
+        buttonNode.setAttribute('data-column-index', i);
+        buttonNode.addEventListener('click', this.handleClick.bind(this));
+      }
+    }
+
+    this.optionCheckbox = document.querySelector(
+      'input[type="checkbox"][value="show-unsorted-icon"]'
+    );
+
+    if (this.optionCheckbox) {
+      this.optionCheckbox.addEventListener(
+        'change',
+        this.handleOptionChange.bind(this)
+      );
+      if (this.optionCheckbox.checked) {
+        this.tableNode.classList.add('show-unsorted-icon');
+      }
+    }
+  }
+
+  setColumnHeaderSort(columnIndex) {
+    if (typeof columnIndex === 'string') {
+      columnIndex = parseInt(columnIndex);
+    }
+
+    for (var i = 0; i < this.columnHeaders.length; i++) {
+      var ch = this.columnHeaders[i];
+      var buttonNode = ch.querySelector('button');
+      if (i === columnIndex) {
+        var value = ch.getAttribute('aria-sort');
+        if (value === 'descending') {
+          ch.setAttribute('aria-sort', 'ascending');
+          this.sortColumn(
+            columnIndex,
+            'ascending',
+            ch.classList.contains('num')
+          );
+        } else {
+          ch.setAttribute('aria-sort', 'descending');
+          this.sortColumn(
+            columnIndex,
+            'descending',
+            ch.classList.contains('num')
+          );
+        }
+      } else {
+        if (ch.hasAttribute('aria-sort') && buttonNode) {
+          ch.removeAttribute('aria-sort');
+        }
+      }
+    }
+  }
+
+  sortColumn(columnIndex, sortValue, isNumber) {
+    function compareValues(a, b) {
+      if (sortValue === 'ascending') {
+        if (a.value === b.value) {
+          return 0;
+        } else {
+          if (isNumber) {
+            return a.value - b.value;
+          } else {
+            return a.value < b.value ? -1 : 1;
+          }
+        }
+      } else {
+        if (a.value === b.value) {
+          return 0;
+        } else {
+          if (isNumber) {
+            return b.value - a.value;
+          } else {
+            return a.value > b.value ? -1 : 1;
+          }
+        }
+      }
+    }
+
+    if (typeof isNumber !== 'boolean') {
+      isNumber = false;
+    }
+
+    var tbodyNode = this.tableNode.querySelector('tbody');
+    var rowNodes = [];
+    var dataCells = [];
+
+    var rowNode = tbodyNode.firstElementChild;
+
+    var index = 0;
+    while (rowNode) {
+      rowNodes.push(rowNode);
+      var rowCells = rowNode.querySelectorAll('th, td');
+      var dataCell = rowCells[columnIndex];
+
+      var data = {};
+      data.index = index;
+      data.value = dataCell.textContent.toLowerCase().trim();
+      if (isNumber) {
+        data.value = parseFloat(data.value);
+      }
+      dataCells.push(data);
+      rowNode = rowNode.nextElementSibling;
+      index += 1;
+    }
+
+    dataCells.sort(compareValues);
+
+    // remove rows
+    while (tbodyNode.firstChild) {
+      tbodyNode.removeChild(tbodyNode.lastChild);
+    }
+
+    // add sorted rows
+    for (var i = 0; i < dataCells.length; i += 1) {
+      tbodyNode.appendChild(rowNodes[dataCells[i].index]);
+    }
+  }
+
+  /* EVENT HANDLERS */
+
+  handleClick(event) {
+    var tgt = event.currentTarget;
+    this.setColumnHeaderSort(tgt.getAttribute('data-column-index'));
+  }
+
+  handleOptionChange(event) {
+    var tgt = event.currentTarget;
+
+    if (tgt.checked) {
+      this.tableNode.classList.add('show-unsorted-icon');
+    } else {
+      this.tableNode.classList.remove('show-unsorted-icon');
+    }
+  }
+}
+
+// Initialize sortable table buttons
+window.addEventListener('load', function () {
+  var sortableTables = document.querySelectorAll('table.sortable');
+  for (var i = 0; i < sortableTables.length; i++) {
+    new SortableTable(sortableTables[i]);
+  }
+});
+
+  </script>
+</body>
+
+   {% endblock %}
